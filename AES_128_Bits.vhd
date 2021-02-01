@@ -18,19 +18,20 @@ end AES_128_Bits;
 architecture archi of AES_128_Bits is
 
 --STATE MACHINE
-signal isState1To9Loc, isState10Loc, isState10LocPrec, isState0Loc : std_logic;
+signal isState1To9Loc, isState10Loc, isState10LocPrec, isState0Loc, isLastRound1To9Loc: std_logic;
+--ADD ROUND KEY
+signal fromMixColumns,fromExpKey : std_logic_vector(127 downto 0);
+--signal fromPlainText, fromMixColumns, fromShiftRows : std_logic_vector(127 downto 0);
+signal InAdd, InShift, InSub, InMix  : std_logic_vector(127 downto 0);
+
+
 component AES_State_Machine is
 port (
     rst, start, clk : in std_logic;
-    busy, isState1To9, isState10, isState0 : out std_logic 
+    busy, isState1To9, isState10, isState0, isLastRound1To9 : out std_logic 
   );
 end component;
 
---ADD ROUND KEY
-signal InSub, fromExpKey : std_logic_vector(127 downto 0);
---signal fromPlainText, fromMixColumns, fromShiftRows : std_logic_vector(127 downto 0);
-signal InAdd, InShift, fromMixColumns : std_logic_vector(127 downto 0);
-signal toSubByte : std_logic_vector(127 downto 0);
 component AddRoundKey is
   port (
     KeyRound : in std_logic_vector(127 downto 0);
@@ -57,7 +58,7 @@ component ShiftRow is
 end component;
 
 
-signal InMix : std_logic_vector(127 downto 0);
+
 component SubByte is
   port (
     IN_A : in std_logic_vector(7 downto 0);
@@ -87,7 +88,8 @@ begin
 		--busy => busy,
 		isState1To9 => isState1To9Loc,
 		isState10 => isState10Loc,
-		isState0 => isState0Loc
+		isState0 => isState0Loc,
+		isLastRound1To9 => isLastRound1To9Loc
      		);
 
 	
@@ -105,27 +107,29 @@ begin
 			if(rst = '1') then
 				DOUT <= (others => '0');
 				busy <= '0';
-			end if;
-			if(start = '1') then
-				busy <= '1';
-			end if;
-			--CONNECTIONS TO ADD ROUND KEY
-			if(isState0Loc = '1') then 
+
+			elsif(start = '1') then
 				busy <= '1';
 				InAdd <= DIN;
 				isState10LocPrec <= '0';
 			end if;
+			--CONNECTIONS TO ADD ROUND KEY
+--			if(isState0Loc = '1') then 
+--				busy <= '1';
+--				InAdd <= DIN;
+--				isState10LocPrec <= '0';
+--			end if;
 			if(isState1To9Loc = '1') then
 				InAdd <= fromMixColumns;
 			end if;
 			--CONNECTION OUT OF ADD ROUND KEY 
-			if(isState10Loc = '1') then
+			if(isLastRound1To9Loc = '1' OR isState10LocPrec = '1') then
 				InAdd <= InMix;
 				if(isState10LocPrec = '1') then
 					DOUT <= InSub;
 					busy <= '0';
 				end if;
-				isState10LocPrec <= isState10Loc;
+				isState10LocPrec <= isLastRound1To9Loc;
 			end if;	
 		end if;
 	end process;
@@ -137,7 +141,7 @@ begin
 		OUT_AddRoundKey => InSub
      		);
 
-	--startExpansion <=  start AND (isState0Loc OR isState1To9Loc OR isState10Loc);
+
 	Exp_Key0 : Exp_Key 
       	port map (
 		KIN  =>  KIN,

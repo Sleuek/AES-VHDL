@@ -50,7 +50,7 @@ signal roundNumber : integer := 1;
 		begin
 			if(clk'event and clk='1') then
 				if (enable ='1' OR continue > 0) then 
-					if(continue = 3) then
+					if(continue = 1) then
 						KINtoProcess <= nC0 & nC1 & nC2 & nC3;
 						roundNumber <= roundNumber +1;
 					else
@@ -99,7 +99,7 @@ signal roundNumber : integer := 1;
 		begin
 			if(clk'event and clk='1') then
 				if (enable ='1' OR continue > 0) then 
-					if(continue <3 ) then
+					if(continue <1 ) then
 						KOUT <= KIN;
 					else
 						KOUT <= nC0 & nC1 & nC2 & nC3;
