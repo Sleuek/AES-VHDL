@@ -7,7 +7,8 @@ entity AES_128_Bits is
   port (
     KIN : in std_logic_vector(127 downto 0);
     DIN : in std_logic_vector(127 downto 0);
-    rst, start, clk : in std_logic;
+    rst, start, clk, encrypt : in std_logic;
+    
     busy : out std_logic;
     DOUT : out std_logic_vector(127 downto 0)
   );
@@ -28,7 +29,7 @@ signal InAdd, InShift, InSub, InMix  : std_logic_vector(127 downto 0);
 component AES_State_Machine is
 port (
     rst, start, clk : in std_logic;
-    busy, isState1To9, isState10, isState0, isLastRound1To9 : out std_logic 
+    isState1To9, isState10, isState0, isLastRound1To9 : out std_logic 
   );
 end component;
 
@@ -64,7 +65,6 @@ component SubByte is
     IN_A : in std_logic_vector(7 downto 0);
     IN_B : in std_logic_vector(7 downto 0);
     Sbox_invSbox : in std_logic;
-    clk : in std_logic;
 
     OUT_A : out std_logic_vector(7 downto 0);
     OUT_B : out std_logic_vector(7 downto 0)
@@ -78,6 +78,15 @@ component MixColumns is
   );
 end component;
 
+
+
+
+
+
+
+
+--DECRYPTION
+
 begin
 	
 	StateMachine0 : AES_State_Machine 
@@ -85,7 +94,6 @@ begin
 		rst  =>  rst,
         	start  =>  start,
 		clk => clk,
-		--busy => busy,
 		isState1To9 => isState1To9Loc,
 		isState10 => isState10Loc,
 		isState0 => isState0Loc,
@@ -103,7 +111,6 @@ begin
 	process(clk)
 	begin
 		if(clk'event and clk='1') then
-			--RESET PART
 			if(rst = '1') then
 				DOUT <= (others => '0');
 				busy <= '0';
@@ -113,16 +120,12 @@ begin
 				InAdd <= DIN;
 				isState10LocPrec <= '0';
 			end if;
-			--CONNECTIONS TO ADD ROUND KEY
---			if(isState0Loc = '1') then 
---				busy <= '1';
---				InAdd <= DIN;
---				isState10LocPrec <= '0';
---			end if;
+
+
+			--Encryption part
 			if(isState1To9Loc = '1') then
 				InAdd <= fromMixColumns;
 			end if;
-			--CONNECTION OUT OF ADD ROUND KEY 
 			if(isLastRound1To9Loc = '1' OR isState10LocPrec = '1') then
 				InAdd <= InMix;
 				if(isState10LocPrec = '1') then
@@ -131,6 +134,12 @@ begin
 				end if;
 				isState10LocPrec <= isLastRound1To9Loc;
 			end if;	
+			--Decryption part
+			
+
+
+
+
 		end if;
 	end process;
 
@@ -157,8 +166,7 @@ begin
 	port map(
    		IN_A => InSub(I*16 +7 downto I *16), 
     		IN_B => InSub(I*16 + 15 downto I *16 + 8), 
-    		Sbox_invSbox => '1',
-    		clk => clk,
+    		Sbox_invSbox => '0',
     		OUT_A => InShift(I*16 +7 downto I *16), 
     		OUT_B => InShift(I*16 + 15 downto I *16 + 8) 
 	);

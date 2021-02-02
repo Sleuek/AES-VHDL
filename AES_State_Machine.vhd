@@ -6,14 +6,14 @@ use ieee.std_logic_1164.all;
 entity AES_State_Machine is
   port (
     rst, start, clk : in std_logic;
-    busy, isState1To9, isState10, isState0,isLastRound1To9 : out std_logic 
+    isState1To9, isState10, isState0,isLastRound1To9 : out std_logic 
   );
 end AES_State_Machine;
 
 
 
 architecture archi of AES_State_Machine is
-signal compteur,oldCompteur : integer;
+signal compteur : integer;
 
 
 
@@ -21,7 +21,7 @@ signal compteur,oldCompteur : integer;
 
 type state_type is (Init,State1To9,State10); --,State0
 signal state_reg, state_next: state_type;
-signal isState1To9Loc, isState10Loc, isState0Loc, isStateInitLoc, startLoc,isLastRound1To9Loc : std_logic;
+signal isState1To9Loc, isState10Loc, isState0Loc, isStateInitLoc,isLastRound1To9Loc : std_logic;
 	begin 
 --		process(clk)
 --		begin
@@ -39,6 +39,11 @@ signal isState1To9Loc, isState10Loc, isState0Loc, isStateInitLoc, startLoc,isLas
 		if(clk'event and clk='1') then
 			if (rst ='1') then 
 				state_reg <= Init;
+				isState1To9Loc <= '0';
+				isState10Loc <= '0';
+				isState0Loc <= '0';
+				isStateInitLoc <= '0';
+				isLastRound1To9Loc <= '0';
 			else
 			case state_reg is 
 				when Init =>
